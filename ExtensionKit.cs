@@ -1355,7 +1355,7 @@ namespace QFramework
         public static void Example()
         {
             var screenshotTexture2D = Camera.main.CaptureCamera(new Rect(0, 0, Screen.width, Screen.height));
-            Log.I(screenshotTexture2D.width);
+            Debug.Log(screenshotTexture2D);
         }
 
         public static Texture2D CaptureCamera(this Camera camera, Rect rect)
@@ -1486,7 +1486,8 @@ namespace QFramework
             return UnityEngine.Object.Instantiate(selfObj);
         }
 
-        public static T Instantiate<T>(this T selfObj, Vector3 position, Quaternion rotation) where T : UnityEngine.Object
+        public static T Instantiate<T>(this T selfObj, Vector3 position, Quaternion rotation)
+            where T : UnityEngine.Object
         {
             return UnityEngine.Object.Instantiate(selfObj, position, rotation);
         }
@@ -2833,6 +2834,112 @@ namespace QFramework
         public static Sprite CreateSprite(this Texture2D self)
         {
             return Sprite.Create(self, new Rect(0, 0, self.width, self.height), Vector2.one * 0.5f);
+        }
+    }
+
+    internal static class Log
+    {
+        public enum LogLevel
+        {
+            None = 0,
+            Exception = 1,
+            Error = 2,
+            Warning = 3,
+            Normal = 4,
+            Max = 5,
+        }
+
+
+        internal static void LogInfo(this object selfMsg)
+        {
+            I(selfMsg);
+        }
+
+        internal static void LogWarning(this object selfMsg)
+        {
+            W(selfMsg);
+        }
+
+        internal static void LogError(this object selfMsg)
+        {
+            E(selfMsg);
+        }
+
+        internal static void LogException(this Exception selfExp)
+        {
+            E(selfExp);
+        }
+
+        private static LogLevel mLogLevel = LogLevel.Normal;
+
+        public static LogLevel Level
+        {
+            get { return mLogLevel; }
+            set { mLogLevel = value; }
+        }
+
+        internal static void I(object msg, params object[] args)
+        {
+            if (mLogLevel < LogLevel.Normal)
+            {
+                return;
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                Debug.Log(msg);
+            }
+            else
+            {
+                Debug.LogFormat(msg.ToString(), args);
+            }
+        }
+
+        internal static void E(Exception e)
+        {
+            if (mLogLevel < LogLevel.Exception)
+            {
+                return;
+            }
+
+            Debug.LogException(e);
+        }
+
+        internal static void E(object msg, params object[] args)
+        {
+            if (mLogLevel < LogLevel.Error)
+            {
+                return;
+            }
+
+            if (args == null || args.Length == 0)
+            {
+                Debug.LogError(msg);
+            }
+            else
+            {
+                Debug.LogError(string.Format(msg.ToString(), args));
+            }
+        }
+
+        internal static void W(object msg)
+        {
+            if (mLogLevel < LogLevel.Warning)
+            {
+                return;
+            }
+
+            Debug.LogWarning(msg);
+        }
+
+        internal static void W(string msg, params object[] args)
+        {
+            if (mLogLevel < LogLevel.Warning)
+            {
+                return;
+            }
+
+            Debug.LogWarning(string.Format(msg, args));
         }
     }
 }

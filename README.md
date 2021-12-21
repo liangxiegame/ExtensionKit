@@ -1,7 +1,12 @@
 # ExtensionKit
-独立的、对 Unity 和 CSharp 语言的扩展支持库
+the Extensions Module is wrapper for Unity and .Net's API
+
+简单来说都是对 .Net 和  Unity 的 API 进行了一层封装
 
 由 QFramework 团队官方维护的独立工具包（不依赖 QFramework）。
+
+
+
 
 ## 环境要求
 
@@ -362,3 +367,9 @@ actionWithIntString.InvokeGracefully(1, "str");
 ## 10. More
 
 请自己体验更多的 API
+
+
+
+## 更多
+
+* QFramework 地址: https://github.com/liangxiegame/qframework
