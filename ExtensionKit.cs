@@ -1,27 +1,9 @@
 /****************************************************************************
- * Copyright (c) 2017 ~ 2019.11 liangxie
+ * Copyright (c) 2017 ~ 2022 liangxiegame UNDER MIT LICENSE
  * 
- * http://qframework.io
+ * https://qframework.cn
  * https://github.com/liangxiegame/QFramework
- * https://github.com/liangxiegame/QFramework.CSharpExtension
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * https://gitee.com/liangxiegame/QFramework
  ****************************************************************************/
 
 namespace QFramework
@@ -33,21 +15,196 @@ namespace QFramework
     using System.Text.RegularExpressions;
     using System.Reflection;
     using System.Text;
-    
-    #if UNITY_5_6_OR_NEWER
     using UnityEngine;
     using UnityEngine.Events;
     using UnityEngine.UI;
-    using Object = UnityEngine.Object;
-    #endif
 
-    /// <summary>
-    /// 通用的扩展，类的扩展
-    /// </summary>
-    public static class ClassExtention
+    public static class DelegateExtension
+    {
+        #region Func Extension
+
+        /// <summary>
+        /// 功能：不为空则调用 Func
+        /// 
+        /// 示例:
+        /// <code>
+        /// Func<int> func = ()=> 1;
+        /// var number = func.InvokeGracefully(); // 等价于 if (func != null) number = func();
+        /// </code>
+        /// </summary>
+        /// <param name="selfFunc"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T InvokeGracefully<T>(this Func<T> selfFunc)
+        {
+            return null != selfFunc ? selfFunc() : default(T);
+        }
+
+        #endregion
+
+        #region Action
+
+        /// <summary>
+        /// 功能：不为空则调用 Action
+        /// 
+        /// 示例:
+        /// <code>
+        /// System.Action action = () => Log.I("action called");
+        /// action.InvokeGracefully(); // if (action != null) action();
+        /// </code>
+        /// </summary>
+        /// <param name="selfAction"> action 对象 </param>
+        /// <returns> 是否调用成功 </returns>
+        public static bool InvokeGracefully(this Action selfAction)
+        {
+            if (null != selfAction)
+            {
+                selfAction();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 不为空则调用 Action<T>
+        /// 
+        /// 示例:
+        /// <code>
+        /// System.Action<int> action = (number) => Log.I("action called" + number);
+        /// action.InvokeGracefully(10); // if (action != null) action(10);
+        /// </code>
+        /// </summary>
+        /// <param name="selfAction"> action 对象</param>
+        /// <typeparam name="T">参数</typeparam>
+        /// <returns> 是否调用成功</returns>
+        public static bool InvokeGracefully<T>(this Action<T> selfAction, T t)
+        {
+            if (null != selfAction)
+            {
+                selfAction(t);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 不为空则调用 Action<T,K>
+        ///
+        /// 示例
+        /// <code>
+        /// System.Action<int,string> action = (number,name) => Log.I("action called" + number + name);
+        /// action.InvokeGracefully(10,"qframework"); // if (action != null) action(10,"qframework");
+        /// </code>
+        /// </summary>
+        /// <param name="selfAction"></param>
+        /// <returns> call succeed</returns>
+        public static bool InvokeGracefully<T, K>(this Action<T, K> selfAction, T t, K k)
+        {
+            if (null != selfAction)
+            {
+                selfAction(t, k);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 不为空则调用委托
+        ///
+        /// 示例：
+        /// <code>
+        /// // delegate
+        /// TestDelegate testDelegate = () => { };
+        /// testDelegate.InvokeGracefully();
+        /// </code>
+        /// </summary>
+        /// <param name="selfAction"></param>
+        /// <returns> call suceed </returns>
+        public static bool InvokeGracefully(this Delegate selfAction, params object[] args)
+        {
+            if (null != selfAction)
+            {
+                selfAction.DynamicInvoke(args);
+                return true;
+            }
+
+            return false;
+        }
+
+        #endregion
+    }
+
+    public static class CSharpObjectExtension
     {
         /// <summary>
+        /// 是否相等
+        /// 
+        /// 示例：
+        /// <code>
+        /// if (this.Is(player))
+        /// {
+        ///     ...
+        /// }
+        /// </code>
+        /// </summary>
+        /// <param name="selfObj"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool Is(this object selfObj, object value)
+        {
+            return selfObj == value;
+        }
+
+        public static bool Is<T>(this T selfObj, Func<T, bool> condition)
+        {
+            return condition(selfObj);
+        }
+
+        /// <summary>
+        /// 表达式成立 则执行 Action
+        /// 
+        /// 示例:
+        /// <code>
+        /// (1 == 1).Do(()=>Debug.Log("1 == 1");
+        /// </code>
+        /// </summary>
+        /// <param name="selfCondition"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static bool Do(this bool selfCondition, Action action)
+        {
+            if (selfCondition)
+            {
+                action();
+            }
+
+            return selfCondition;
+        }
+
+        /// <summary>
+        /// 不管表达成不成立 都执行 Action，并把结果返回
+        /// 
+        /// 示例:
+        /// <code>
+        /// (1 == 1).Do((result)=>Debug.Log("1 == 1:" + result);
+        /// </code>
+        /// </summary>
+        /// <param name="selfCondition"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static bool Do(this bool selfCondition, Action<bool> action)
+        {
+            action(selfCondition);
+
+            return selfCondition;
+        }
+
+        /// <summary>
         /// 功能：判断是否为空
+        /// 
         /// 示例：
         /// <code>
         /// var simpleObject = new object();
@@ -85,126 +242,22 @@ namespace QFramework
         {
             return null != selfObj;
         }
-    }
 
-    /// <summary>
-    /// Func、Action、delegate 的扩展
-    /// </summary>
-    public static class FuncOrActionOrEventExtension
-    {
-        #region Func Extension
-
-        /// <summary>
-        /// 功能：不为空则调用 Func
-        /// 示例:
-        /// <code>
-        /// Func<int> func = ()=> 1;
-        /// var number = func.InvokeGracefully(); // 等价于 if (func != null) number = func();
-        /// </code>
-        /// </summary>
-        /// <param name="selfFunc"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static T InvokeGracefully<T>(this Func<T> selfFunc)
+        public static void DoIfNotNull<T>(this T selfObj, Action<T> action) where T : class
         {
-            return null != selfFunc ? selfFunc() : default(T);
-        }
-
-        #endregion
-
-        #region Action
-
-        /// <summary>
-        /// 功能：不为空则调用 Action
-        /// 示例:
-        /// <code>
-        /// System.Action action = () => Log.I("action called");
-        /// action.InvokeGracefully(); // if (action != null) action();
-        /// </code>
-        /// </summary>
-        /// <param name="selfAction"> action 对象 </param>
-        /// <returns> 是否调用成功 </returns>
-        public static bool InvokeGracefully(this Action selfAction)
-        {
-            if (null != selfAction)
+            if (selfObj != null)
             {
-                selfAction();
-                return true;
+                action(selfObj);
             }
-
-            return false;
         }
-
-        /// <summary>
-        /// 不为空则调用 Action<T>
-        /// 示例:
-        /// <code>
-        /// System.Action<int> action = (number) => Log.I("action called" + number);
-        /// action.InvokeGracefully(10); // if (action != null) action(10);
-        /// </code>
-        /// </summary>
-        /// <param name="selfAction"> action 对象</param>
-        /// <typeparam name="T">参数</typeparam>
-        /// <returns> 是否调用成功</returns>
-        public static bool InvokeGracefully<T>(this Action<T> selfAction, T t)
-        {
-            if (null != selfAction)
-            {
-                selfAction(t);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 不为空则调用 Action<T,K>
-        /// <code>
-        /// System.Action<int,string> action = (number,name) => Log.I("action called" + number + name);
-        /// action.InvokeGracefully(10,"qframework"); // if (action != null) action(10,"qframework");
-        /// </code>
-        /// </summary>
-        /// <param name="selfAction"></param>
-        /// <returns> call succeed</returns>
-        public static bool InvokeGracefully<T, K>(this Action<T, K> selfAction, T t, K k)
-        {
-            if (null != selfAction)
-            {
-                selfAction(t, k);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 不为空则调用委托
-        /// <code>
-        /// // delegate
-        /// TestDelegate testDelegate = () => { };
-        /// testDelegate.InvokeGracefully();
-        /// </code>
-        /// </summary>
-        /// <param name="selfAction"></param>
-        /// <returns> call suceed </returns>
-        public static bool InvokeGracefully(this Delegate selfAction, params object[] args)
-        {
-            if (null != selfAction)
-            {
-                selfAction.DynamicInvoke(args);
-                return true;
-            }
-
-            return false;
-        }
-
-        #endregion
     }
 
     /// <summary>
     /// 泛型工具
+    /// 
     /// 实例：
     /// <code>
+    /// 示例：
     /// var typeName = GenericExtention.GetTypeName<string>();
     /// typeName.LogInfo(); // string
     /// </code>
@@ -429,6 +482,23 @@ namespace QFramework
     public static class IOExtension
     {
         /// <summary>
+        /// 检测路径是否存在，如果不存在则创建
+        /// </summary>
+        /// <param name="path"></param>
+        public static string CreateDirIfNotExists4FilePath(this string path)
+        {
+            var direct = Path.GetDirectoryName(path);
+
+            if (!Directory.Exists(direct))
+            {
+                Directory.CreateDirectory(direct);
+            }
+
+            return path;
+        }
+
+
+        /// <summary>
         /// 创建新的文件夹,如果存在则不创建
         /// <code>
         /// var testDir = "Assets/TestFolder";
@@ -521,27 +591,6 @@ namespace QFramework
         #region 未经过测试
 
         /// <summary>
-        /// 读取文本
-        /// </summary>
-        /// <param name="file"></param>
-        /// <returns></returns>
-        public static string ReadText(this string fileFullPath)
-        {
-            var result = string.Empty;
-
-            using (var fs = new FileStream(fileFullPath, FileMode.Open, FileAccess.Read))
-            {
-                using (var sr = new StreamReader(fs))
-                {
-                    result = sr.ReadToEnd();
-                }
-            }
-
-            return result;
-        }
-
-#if UNITY_EDITOR
-        /// <summary>
         /// 打开文件夹
         /// </summary>
         /// <param name="path"></param>
@@ -553,7 +602,7 @@ namespace QFramework
             System.Diagnostics.Process.Start("explorer.exe", path);
 #endif
         }
-#endif
+
 
         /// <summary>
         /// 获取文件夹名
@@ -562,7 +611,7 @@ namespace QFramework
         /// <returns></returns>
         public static string GetDirectoryName(string fileName)
         {
-            fileName = IOExtension.MakePathStandard(fileName);
+            fileName = MakePathStandard(fileName);
             return fileName.Substring(0, fileName.LastIndexOf('/'));
         }
 
@@ -627,28 +676,11 @@ namespace QFramework
         }
 
         /// <summary>
-        /// 结合目录
-        /// </summary>
-        /// <param name="paths"></param>
-        /// <returns></returns>
-        public static string Combine(params string[] paths)
-        {
-            string result = "";
-            foreach (string path in paths)
-            {
-                result = Path.Combine(result, path);
-            }
-
-            result = MakePathStandard(result);
-            return result;
-        }
-
-        /// <summary>
         /// 获取父文件夹
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static string GetPathParentFolder(string path)
+        public static string GetPathParentFolder(this string path)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -762,6 +794,27 @@ namespace QFramework
     }
 
     /// <summary>
+    /// 简单的概率计算
+    /// </summary>
+    public static class ProbilityHelper
+    {
+        public static T RandomValueFrom<T>(params T[] values)
+        {
+            return values[UnityEngine.Random.Range(0, values.Length)];
+        }
+
+        /// <summary>
+        /// percent probability
+        /// </summary>
+        /// <param name="percent"> 0 ~ 100 </param>
+        /// <returns></returns>
+        public static bool PercentProbability(int percent)
+        {
+            return UnityEngine.Random.Range(0, 1000) * 0.001f < 50 * 0.01f;
+        }
+    }
+
+    /// <summary>
     /// 面向对象扩展（继承、封装、多态)
     /// </summary>
     public static class OOPExtension
@@ -809,79 +862,24 @@ namespace QFramework
     }
 
     /// <summary>
-    /// Assembly 管理器
+    /// 程序集工具
     /// </summary>
-    public class AssemblyManager
+    public class AssemblyUtil
     {
         /// <summary>
-        /// 编辑器默认的程序集Assembly-CSharp.dll
-        /// </summary>
-        private static Assembly defaultCSharpAssembly;
-
-#if UNITY_ANDROID
-        /// <summary>
-        /// 程序集缓存
-        /// </summary>
-        private static Dictionary<string, Assembly> assemblyCache = new Dictionary<string, Assembly>();
-#endif
-
-        /// <summary>
-        /// 获取编辑器默认的程序集Assembly-CSharp.dll
+        /// 获取 Assembly-CSharp 程序集
         /// </summary>
         public static Assembly DefaultCSharpAssembly
         {
             get
             {
-                //如果已经找到，直接返回
-                if (defaultCSharpAssembly != null)
-                    return defaultCSharpAssembly;
-
-                //从当前加载的程序包中寻找，如果找到，则直接记录并返回
-                var assems = AppDomain.CurrentDomain.GetAssemblies();
-                foreach (var assem in assems)
-                {
-                    //所有本地代码都编译到Assembly-CSharp中
-                    if (assem.GetName().Name == "Assembly-CSharp")
-                    {
-                        //保存到列表并返回
-                        defaultCSharpAssembly = assem;
-                        break;
-                    }
-                }
-
-                return defaultCSharpAssembly;
+                return AppDomain.CurrentDomain.GetAssemblies()
+                    .SingleOrDefault(a => a.GetName().Name == "Assembly-CSharp");
             }
         }
 
         /// <summary>
-        /// 获取Assembly
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static Assembly GetAssembly(string name)
-        {
-#if UNITY_ANDROID
-            if (!assemblyCache.ContainsKey(name))
-                return null;
-
-            return assemblyCache[name];
-#else
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-
-                if (assembly.GetName().Name == name)
-                {
-                    return assembly;
-                }
-            }
-
-            return null;
-#endif
-        }
-
-
-        /// <summary>
-        /// 获取默认的程序集
+        /// 获取默认的程序集中的类型
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
@@ -889,13 +887,8 @@ namespace QFramework
         {
             return DefaultCSharpAssembly.GetType(typeName);
         }
-
-
-        public static Type[] GetTypeList(string assemblyName)
-        {
-            return GetAssembly(assemblyName).GetTypes();
-        }
     }
+
 
     /// <summary>
     /// 反射扩展
@@ -904,8 +897,8 @@ namespace QFramework
     {
         public static void Example()
         {
-            var selfType = ReflectionExtension.GetAssemblyCSharp().GetType("QFramework.ReflectionExtension");
-//            selfType.LogInfo();
+            // var selfType = ReflectionExtension.GetAssemblyCSharp().GetType("QFramework.ReflectionExtension");
+            // selfType.LogInfo();
         }
 
         public static Assembly GetAssemblyCSharp()
@@ -1017,7 +1010,7 @@ namespace QFramework
         /// </summary>
         public static T GetFirstAttribute<T>(this MethodInfo method, bool inherit) where T : Attribute
         {
-            var attrs = (T[]) method.GetCustomAttributes(typeof(T), inherit);
+            var attrs = (T[])method.GetCustomAttributes(typeof(T), inherit);
             if (attrs != null && attrs.Length > 0)
                 return attrs[0];
             return null;
@@ -1028,7 +1021,7 @@ namespace QFramework
         /// </summary>
         public static T GetFirstAttribute<T>(this FieldInfo field, bool inherit) where T : Attribute
         {
-            var attrs = (T[]) field.GetCustomAttributes(typeof(T), inherit);
+            var attrs = (T[])field.GetCustomAttributes(typeof(T), inherit);
             if (attrs != null && attrs.Length > 0)
                 return attrs[0];
             return null;
@@ -1039,7 +1032,7 @@ namespace QFramework
         /// </summary>
         public static T GetFirstAttribute<T>(this PropertyInfo prop, bool inherit) where T : Attribute
         {
-            var attrs = (T[]) prop.GetCustomAttributes(typeof(T), inherit);
+            var attrs = (T[])prop.GetCustomAttributes(typeof(T), inherit);
             if (attrs != null && attrs.Length > 0)
                 return attrs[0];
             return null;
@@ -1050,7 +1043,7 @@ namespace QFramework
         /// </summary>
         public static T GetFirstAttribute<T>(this Type type, bool inherit) where T : Attribute
         {
-            var attrs = (T[]) type.GetCustomAttributes(typeof(T), inherit);
+            var attrs = (T[])type.GetCustomAttributes(typeof(T), inherit);
             if (attrs != null && attrs.Length > 0)
                 return attrs[0];
             return null;
@@ -1071,34 +1064,6 @@ namespace QFramework
         {
             return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;
         }
-    }
-
-    /// <summary>
-    /// 通过编写方法并且添加属性可以做到转换至String 如：
-    /// 
-    /// <example>
-    /// [ToString]
-    /// public static string ConvertToString(TestObj obj)
-    /// </example>
-    ///
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
-    public class ToString : Attribute
-    {
-    }
-
-    /// <summary>
-    /// 通过编写方法并且添加属性可以做到转换至String 如：
-    /// 
-    /// <example>
-    /// [FromString]
-    /// public static TestObj ConvertFromString(string str)
-    /// </example>
-    ///
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
-    public class FromString : Attribute
-    {
     }
 
     /// <summary>
@@ -1142,13 +1107,18 @@ namespace QFramework
         /// <returns></returns>
         public static bool IsTrimNotNullAndEmpty(this string selfStr)
         {
-            return !string.IsNullOrEmpty(selfStr.Trim());
+            return selfStr != null && !string.IsNullOrEmpty(selfStr.Trim());
+        }
+
+        public static bool IsTrimNullOrEmpty(this string selfStr)
+        {
+            return selfStr == null || string.IsNullOrEmpty(selfStr.Trim());
         }
 
         /// <summary>
         /// 缓存
         /// </summary>
-        private static readonly char[] mCachedSplitCharArray = {'.'};
+        private static readonly char[] mCachedSplitCharArray = { '.' };
 
         /// <summary>
         /// Split
@@ -1209,7 +1179,7 @@ namespace QFramework
         public static string[] ArrayFromCSV(this string values)
         {
             return values
-                .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries)
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(value => value.Trim())
                 .ToArray();
         }
@@ -1354,10 +1324,9 @@ namespace QFramework
             return targets.Aggregate(str, (current, t) => current.Replace(t, string.Empty));
         }
     }
-    
-    
-    #if UNITY_5_6_OR_NEWER
-     public static class BehaviourExtension
+
+
+    public static class BehaviourExtension
     {
         public static void Example()
         {
@@ -1386,7 +1355,7 @@ namespace QFramework
         public static void Example()
         {
             var screenshotTexture2D = Camera.main.CaptureCamera(new Rect(0, 0, Screen.width, Screen.height));
-            Debug.Log(screenshotTexture2D.width);
+            Log.I(screenshotTexture2D.width);
         }
 
         public static Texture2D CaptureCamera(this Camera camera, Rect rect)
@@ -1397,13 +1366,13 @@ namespace QFramework
 
             RenderTexture.active = renderTexture;
 
-            var screenShot = new Texture2D((int) rect.width, (int) rect.height, TextureFormat.RGB24, false);
+            var screenShot = new Texture2D((int)rect.width, (int)rect.height, TextureFormat.RGB24, false);
             screenShot.ReadPixels(rect, 0, 0);
             screenShot.Apply();
 
             camera.targetTexture = null;
             RenderTexture.active = null;
-            Object.Destroy(renderTexture);
+            UnityEngine.Object.Destroy(renderTexture);
 
             return screenShot;
         }
@@ -1414,7 +1383,7 @@ namespace QFramework
         public static void Example()
         {
             var color = "#C5563CFF".HtmlStringToColor();
-            Debug.Log(color);
+            Log.I(color);
         }
 
         /// <summary>
@@ -1433,173 +1402,6 @@ namespace QFramework
         /// unity's color always new a color
         /// </summary>
         public static Color White = Color.white;
-    }
-
-    /// <summary>
-    /// GameObject's Util/Static This Extension
-    /// </summary>
-    public static class GameObjectExtension
-    {
-        public static void Example()
-        {
-            var gameObject = new GameObject();
-            var transform = gameObject.transform;
-            var selfScript = gameObject.AddComponent<MonoBehaviour>();
-            var boxCollider = gameObject.AddComponent<BoxCollider>();
-
-            gameObject.Show(); // gameObject.SetActive(true)
-            selfScript.Show(); // this.gameObject.SetActive(true)
-            boxCollider.Show(); // boxCollider.gameObject.SetActive(true)
-            gameObject.transform.Show(); // transform.gameObject.SetActive(true)
-
-            gameObject.Hide(); // gameObject.SetActive(false)
-            selfScript.Hide(); // this.gameObject.SetActive(false)
-            boxCollider.Hide(); // boxCollider.gameObject.SetActive(false)
-            transform.Hide(); // transform.gameObject.SetActive(false)
-
-            selfScript.DestroyGameObj();
-            boxCollider.DestroyGameObj();
-            transform.DestroyGameObj();
-
-            selfScript.DestroyGameObjGracefully();
-            boxCollider.DestroyGameObjGracefully();
-            transform.DestroyGameObjGracefully();
-
-            selfScript.DestroyGameObjAfterDelay(1.0f);
-            boxCollider.DestroyGameObjAfterDelay(1.0f);
-            transform.DestroyGameObjAfterDelay(1.0f);
-
-            selfScript.DestroyGameObjAfterDelayGracefully(1.0f);
-            boxCollider.DestroyGameObjAfterDelayGracefully(1.0f);
-            transform.DestroyGameObjAfterDelayGracefully(1.0f);
-
-            gameObject.Layer(0);
-            selfScript.Layer(0);
-            boxCollider.Layer(0);
-            transform.Layer(0);
-
-            gameObject.Layer("Default");
-            selfScript.Layer("Default");
-            boxCollider.Layer("Default");
-            transform.Layer("Default");
-        }
-
-        #region CEGO001 Show
-
-        public static GameObject Show(this GameObject selfObj)
-        {
-            selfObj.SetActive(true);
-            return selfObj;
-        }
-
-        public static T Show<T>(this T selfComponent) where T : Component
-        {
-            selfComponent.gameObject.Show();
-            return selfComponent;
-        }
-
-        #endregion
-
-        #region CEGO002 Hide
-
-        public static GameObject Hide(this GameObject selfObj)
-        {
-            selfObj.SetActive(false);
-            return selfObj;
-        }
-
-        public static T Hide<T>(this T selfComponent) where T : Component
-        {
-            selfComponent.gameObject.Hide();
-            return selfComponent;
-        }
-
-        #endregion
-
-        #region CEGO003 DestroyGameObj
-
-        public static void DestroyGameObj<T>(this T selfBehaviour) where T : Component
-        {
-            selfBehaviour.gameObject.DestroySelf();
-        }
-
-        #endregion
-
-        #region CEGO004 DestroyGameObjGracefully
-
-        public static void DestroyGameObjGracefully<T>(this T selfBehaviour) where T : Component
-        {
-            if (selfBehaviour && selfBehaviour.gameObject)
-            {
-                selfBehaviour.gameObject.DestroySelfGracefully();
-            }
-        }
-
-        #endregion
-
-        #region CEGO005 DestroyGameObjGracefully
-
-        public static T DestroyGameObjAfterDelay<T>(this T selfBehaviour, float delay) where T : Component
-        {
-            selfBehaviour.gameObject.DestroySelfAfterDelay(delay);
-            return selfBehaviour;
-        }
-
-        public static T DestroyGameObjAfterDelayGracefully<T>(this T selfBehaviour, float delay) where T : Component
-        {
-            if (selfBehaviour && selfBehaviour.gameObject)
-            {
-                selfBehaviour.gameObject.DestroySelfAfterDelay(delay);
-            }
-
-            return selfBehaviour;
-        }
-
-        #endregion
-
-        #region CEGO006 Layer
-
-        public static GameObject Layer(this GameObject selfObj, int layer)
-        {
-            selfObj.layer = layer;
-            return selfObj;
-        }
-
-        public static T Layer<T>(this T selfComponent, int layer) where T : Component
-        {
-            selfComponent.gameObject.layer = layer;
-            return selfComponent;
-        }
-
-        public static GameObject Layer(this GameObject selfObj, string layerName)
-        {
-            selfObj.layer = LayerMask.NameToLayer(layerName);
-            return selfObj;
-        }
-
-        public static T Layer<T>(this T selfComponent, string layerName) where T : Component
-        {
-            selfComponent.gameObject.layer = LayerMask.NameToLayer(layerName);
-            return selfComponent;
-        }
-
-        #endregion
-
-        #region CEGO007 Component
-
-        public static T GetOrAddComponent<T>(this GameObject selfComponent) where T : Component
-        {
-            var comp = selfComponent.gameObject.GetComponent<T>();
-            return comp ? comp : selfComponent.gameObject.AddComponent<T>();
-        }
-
-        public static Component GetOrAddComponent(this GameObject selfComponent, Type type)
-        {
-            var comp = selfComponent.gameObject.GetComponent(type);
-            return comp ? comp : selfComponent.gameObject.AddComponent(type);
-        }
-
-        #endregion
     }
 
     public static class GraphicExtension
@@ -1669,9 +1471,9 @@ namespace QFramework
                 .DestroySelfAfterDelayGracefully(1.0f);
 
             gameObject
-                .ApplySelfTo(selfObj => Debug.Log(selfObj.name))
+                .ApplySelfTo(selfObj => Log.I(selfObj.name))
                 .Name("TestObj")
-                .ApplySelfTo(selfObj => Debug.Log(selfObj.name))
+                .ApplySelfTo(selfObj => Log.I(selfObj.name))
                 .Name("ExtensionExample")
                 .DontDestroyOnLoad();
         }
@@ -1679,16 +1481,43 @@ namespace QFramework
 
         #region CEUO001 Instantiate
 
-        public static T Instantiate<T>(this T selfObj) where T : Object
+        public static T Instantiate<T>(this T selfObj) where T : UnityEngine.Object
         {
-            return Object.Instantiate(selfObj);
+            return UnityEngine.Object.Instantiate(selfObj);
+        }
+
+        public static T Instantiate<T>(this T selfObj, Vector3 position, Quaternion rotation) where T : UnityEngine.Object
+        {
+            return UnityEngine.Object.Instantiate(selfObj, position, rotation);
+        }
+
+        public static T Instantiate<T>(
+            this T selfObj,
+            Vector3 position,
+            Quaternion rotation,
+            Transform parent)
+            where T : UnityEngine.Object
+        {
+            return UnityEngine.Object.Instantiate(selfObj, position, rotation, parent);
+        }
+
+
+        public static T InstantiateWithParent<T>(this T selfObj, Transform parent, bool worldPositionStays)
+            where T : UnityEngine.Object
+        {
+            return (T)UnityEngine.Object.Instantiate((UnityEngine.Object)selfObj, parent, worldPositionStays);
+        }
+
+        public static T InstantiateWithParent<T>(this T selfObj, Transform parent) where T : UnityEngine.Object
+        {
+            return UnityEngine.Object.Instantiate(selfObj, parent, false);
         }
 
         #endregion
 
-        #region CEUO002 Instantiate
+        #region CEUO002 Name
 
-        public static T Name<T>(this T selfObj, string name) where T : Object
+        public static T Name<T>(this T selfObj, string name) where T : UnityEngine.Object
         {
             selfObj.name = name;
             return selfObj;
@@ -1698,16 +1527,16 @@ namespace QFramework
 
         #region CEUO003 Destroy Self
 
-        public static void DestroySelf<T>(this T selfObj) where T : Object
+        public static void DestroySelf<T>(this T selfObj) where T : UnityEngine.Object
         {
-            Object.Destroy(selfObj);
+            UnityEngine.Object.Destroy(selfObj);
         }
 
-        public static T DestroySelfGracefully<T>(this T selfObj) where T : Object
+        public static T DestroySelfGracefully<T>(this T selfObj) where T : UnityEngine.Object
         {
             if (selfObj)
             {
-                Object.Destroy(selfObj);
+                UnityEngine.Object.Destroy(selfObj);
             }
 
             return selfObj;
@@ -1715,19 +1544,19 @@ namespace QFramework
 
         #endregion
 
-        #region CEUO004 Destroy Self AfterDelay 
+        #region CEUO004 Destroy Self AfterDelay
 
-        public static T DestroySelfAfterDelay<T>(this T selfObj, float afterDelay) where T : Object
+        public static T DestroySelfAfterDelay<T>(this T selfObj, float afterDelay) where T : UnityEngine.Object
         {
-            Object.Destroy(selfObj, afterDelay);
+            UnityEngine.Object.Destroy(selfObj, afterDelay);
             return selfObj;
         }
 
-        public static T DestroySelfAfterDelayGracefully<T>(this T selfObj, float delay) where T : Object
+        public static T DestroySelfAfterDelayGracefully<T>(this T selfObj, float delay) where T : UnityEngine.Object
         {
             if (selfObj)
             {
-                Object.Destroy(selfObj, delay);
+                UnityEngine.Object.Destroy(selfObj, delay);
             }
 
             return selfObj;
@@ -1735,9 +1564,9 @@ namespace QFramework
 
         #endregion
 
-        #region CEUO005 Apply Self To 
+        #region CEUO005 Apply Self To
 
-        public static T ApplySelfTo<T>(this T selfObj, System.Action<T> toFunction) where T : Object
+        public static T ApplySelfTo<T>(this T selfObj, System.Action<T> toFunction) where T : UnityEngine.Object
         {
             toFunction.InvokeGracefully(selfObj);
             return selfObj;
@@ -1747,15 +1576,15 @@ namespace QFramework
 
         #region CEUO006 DontDestroyOnLoad
 
-        public static T DontDestroyOnLoad<T>(this T selfObj) where T : Object
+        public static T DontDestroyOnLoad<T>(this T selfObj) where T : UnityEngine.Object
         {
-            Object.DontDestroyOnLoad(selfObj);
+            UnityEngine.Object.DontDestroyOnLoad(selfObj);
             return selfObj;
         }
 
         #endregion
 
-        public static T As<T>(this Object selfObj) where T : Object
+        public static T As<T>(this object selfObj) where T : class
         {
             return selfObj as T;
         }
@@ -1835,11 +1664,6 @@ namespace QFramework
         }
     }
 
-#if SLUA_SUPPORT
-    using SLua;
-    [CustomLuaClass]
-#endif
-
     /// <summary>
     /// Transform's Extension
     /// </summary>
@@ -1851,7 +1675,7 @@ namespace QFramework
             var transform = selfScript.transform;
 
             transform
-                .Parent(null)
+                // .Parent(null)
                 .LocalIdentity()
                 .LocalPositionIdentity()
                 .LocalRotationIdentity()
@@ -1874,13 +1698,13 @@ namespace QFramework
                 .PositionY(0)
                 .PositionZ(0)
                 .Rotation(Quaternion.identity)
-                .DestroyAllChild()
+                .DestroyChildren()
                 .AsLastSibling()
                 .AsFirstSibling()
                 .SiblingIndex(0);
 
             selfScript
-                .Parent(null)
+                // .Parent(null)
                 .LocalIdentity()
                 .LocalPositionIdentity()
                 .LocalRotationIdentity()
@@ -1903,7 +1727,7 @@ namespace QFramework
                 .PositionY(0)
                 .PositionZ(0)
                 .Rotation(Quaternion.identity)
-                .DestroyAllChild()
+                .DestroyChildren()
                 .AsLastSibling()
                 .AsFirstSibling()
                 .SiblingIndex(0);
@@ -1964,7 +1788,6 @@ namespace QFramework
         {
             return selfComponent.transform.localPosition;
         }
-
 
 
         public static T LocalPosition<T>(this T selfComponent, float x, float y, float z) where T : Component
@@ -2249,7 +2072,19 @@ namespace QFramework
 
         #region CETR010 Destroy All Child
 
+        [Obsolete("弃用啦 请使用 DestroyChildren")]
         public static T DestroyAllChild<T>(this T selfComponent) where T : Component
+        {
+            return selfComponent.DestroyChildren();
+        }
+
+        [Obsolete("弃用啦 请使用 DestroyChildren")]
+        public static GameObject DestroyAllChild(this GameObject selfGameObj)
+        {
+            return selfGameObj.DestroyChildren();
+        }
+
+        public static T DestroyChildren<T>(this T selfComponent) where T : Component
         {
             var childCount = selfComponent.transform.childCount;
 
@@ -2261,7 +2096,7 @@ namespace QFramework
             return selfComponent;
         }
 
-        public static GameObject DestroyAllChild(this GameObject selfGameObj)
+        public static GameObject DestroyChildren(this GameObject selfGameObj)
         {
             var childCount = selfGameObj.transform.childCount;
 
@@ -2394,7 +2229,7 @@ namespace QFramework
         {
             if (predicate(tfParent))
             {
-                Debug.Log("Hit " + tfParent.name);
+                Log.I("Hit " + tfParent.name);
                 return tfParent;
             }
 
@@ -2531,7 +2366,7 @@ namespace QFramework
                 currentSum = nextSum;
             }
 
-            Debug.LogError("权值范围计算错误！");
+            Log.E("权值范围计算错误！");
             return -1;
         }
 
@@ -2556,5 +2391,448 @@ namespace QFramework
             return keys[finalKeyIndex];
         }
     }
-    #endif
+
+    public static class AnimatorExtension
+    {
+        public static void AddAnimatorParameterIfExists(this Animator animator, string parameterName,
+            AnimatorControllerParameterType type, List<string> parameterList)
+        {
+            if (animator.HasParameterOfType(parameterName, type))
+            {
+                parameterList.Add(parameterName);
+            }
+        }
+
+        // <summary>
+        /// Updates the animator bool.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">If set to <c>true</c> value.</param>
+        public static void UpdateAnimatorBool(this Animator self, string parameterName, bool value,
+            List<string> parameterList)
+        {
+            if (parameterList.Contains(parameterName))
+            {
+                self.SetBool(parameterName, value);
+            }
+        }
+
+        public static void UpdateAnimatorTrigger(this Animator self, string parameterName, List<string> parameterList)
+        {
+            if (parameterList.Contains(parameterName))
+            {
+                self.SetTrigger(parameterName);
+            }
+        }
+
+        /// <summary>
+        /// Triggers an animator trigger.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">If set to <c>true</c> value.</param>
+        public static void SetAnimatorTrigger(this Animator self, string parameterName, List<string> parameterList)
+        {
+            if (parameterList.Contains(parameterName))
+            {
+                self.SetTrigger(parameterName);
+            }
+        }
+
+        /// <summary>
+        /// Updates the animator float.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">Value.</param>
+        public static void UpdateAnimatorFloat(this Animator self, string parameterName, float value,
+            List<string> parameterList)
+        {
+            if (parameterList.Contains(parameterName))
+            {
+                self.SetFloat(parameterName, value);
+            }
+        }
+
+        /// <summary>
+        /// Updates the animator integer.
+        /// </summary>
+        /// <param name="self">self.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">Value.</param>
+        public static void UpdateAnimatorInteger(this Animator self, string parameterName, int value,
+            List<string> parameterList)
+        {
+            if (parameterList.Contains(parameterName))
+            {
+                self.SetInteger(parameterName, value);
+            }
+        }
+
+
+        // <summary>
+        /// Updates the animator bool without checking the parameter's existence.
+        /// </summary>
+        /// <param name="self">self.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">If set to <c>true</c> value.</param>
+        public static void UpdateAnimatorBool(this Animator self, string parameterName, bool value)
+        {
+            self.SetBool(parameterName, value);
+        }
+
+        /// <summary>
+        /// Updates the animator trigger without checking the parameter's existence
+        /// </summary>
+        /// <param name="self">self.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        public static void UpdateAnimatorTrigger(this Animator self, string parameterName)
+        {
+            self.SetTrigger(parameterName);
+        }
+
+        /// <summary>
+        /// Triggers an animator trigger without checking for the parameter's existence.
+        /// </summary>
+        /// <param name="self">self.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">If set to <c>true</c> value.</param>
+        public static void SetAnimatorTrigger(this Animator self, string parameterName)
+        {
+            self.SetTrigger(parameterName);
+        }
+
+        /// <summary>
+        /// Updates the animator float without checking for the parameter's existence.
+        /// </summary>
+        /// <param name="self">self.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">Value.</param>
+        public static void UpdateAnimatorFloat(this Animator self, string parameterName, float value)
+        {
+            self.SetFloat(parameterName, value);
+        }
+
+        /// <summary>
+        /// Updates the animator integer without checking for the parameter's existence.
+        /// </summary>
+        /// <param name="self">self.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">Value.</param>
+        public static void UpdateAnimatorInteger(this Animator self, string parameterName, int value)
+        {
+            self.SetInteger(parameterName, value);
+        }
+
+
+        // <summary>
+        /// Updates the animator bool after checking the parameter's existence.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">If set to <c>true</c> value.</param>
+        public static void UpdateAnimatorBoolIfExists(this Animator self, string parameterName, bool value)
+        {
+            if (self.HasParameterOfType(parameterName, AnimatorControllerParameterType.Bool))
+            {
+                self.SetBool(parameterName, value);
+            }
+        }
+
+        public static void UpdateAnimatorTriggerIfExists(this Animator self, string parameterName)
+        {
+            if (self.HasParameterOfType(parameterName, AnimatorControllerParameterType.Trigger))
+            {
+                self.SetTrigger(parameterName);
+            }
+        }
+
+        /// <summary>
+        /// Triggers an animator trigger after checking for the parameter's existence.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">If set to <c>true</c> value.</param>
+        public static void SetAnimatorTriggerIfExists(this Animator self, string parameterName)
+        {
+            if (self.HasParameterOfType(parameterName, AnimatorControllerParameterType.Trigger))
+            {
+                self.SetTrigger(parameterName);
+            }
+        }
+
+        /// <summary>
+        /// Updates the animator float after checking for the parameter's existence.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">Value.</param>
+        public static void UpdateAnimatorFloatIfExists(this Animator self, string parameterName, float value)
+        {
+            if (self.HasParameterOfType(parameterName, AnimatorControllerParameterType.Float))
+            {
+                self.SetFloat(parameterName, value);
+            }
+        }
+
+        /// <summary>
+        /// Updates the animator integer after checking for the parameter's existence.
+        /// </summary>
+        /// <param name="self">Animator.</param>
+        /// <param name="parameterName">Parameter name.</param>
+        /// <param name="value">Value.</param>
+        public static void UpdateAnimatorIntegerIfExists(this Animator self, string parameterName, int value)
+        {
+            if (self.HasParameterOfType(parameterName, AnimatorControllerParameterType.Int))
+            {
+                self.SetInteger(parameterName, value);
+            }
+        }
+
+        /// <summary>
+        /// Determines if an animator contains a certain parameter, based on a type and a name
+        /// </summary>
+        /// <returns><c>true</c> if has parameter of type the specified self name type; otherwise, <c>false</c>.</returns>
+        /// <param name="self">Self.</param>
+        /// <param name="name">Name.</param>
+        /// <param name="type">Type.</param>
+        public static bool HasParameterOfType(this Animator self, string name, AnimatorControllerParameterType type)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            var parameters = self.parameters;
+            return parameters.Any(currParam => currParam.type == type && currParam.name == name);
+        }
+    }
+
+    /// <summary>
+    /// GameObject's Util/Static This Extension
+    /// </summary>
+    public static class GameObjectExtension
+    {
+        public static void Example()
+        {
+            var gameObject = new GameObject();
+            var transform = gameObject.transform;
+            var selfScript = gameObject.AddComponent<MonoBehaviour>();
+            var boxCollider = gameObject.AddComponent<BoxCollider>();
+
+            gameObject.Show(); // gameObject.SetActive(true)
+            selfScript.Show(); // this.gameObject.SetActive(true)
+            boxCollider.Show(); // boxCollider.gameObject.SetActive(true)
+            gameObject.transform.Show(); // transform.gameObject.SetActive(true)
+
+            gameObject.Hide(); // gameObject.SetActive(false)
+            selfScript.Hide(); // this.gameObject.SetActive(false)
+            boxCollider.Hide(); // boxCollider.gameObject.SetActive(false)
+            transform.Hide(); // transform.gameObject.SetActive(false)
+
+            selfScript.DestroyGameObj();
+            boxCollider.DestroyGameObj();
+            transform.DestroyGameObj();
+
+            selfScript.DestroyGameObjGracefully();
+            boxCollider.DestroyGameObjGracefully();
+            transform.DestroyGameObjGracefully();
+
+            selfScript.DestroyGameObjAfterDelay(1.0f);
+            boxCollider.DestroyGameObjAfterDelay(1.0f);
+            transform.DestroyGameObjAfterDelay(1.0f);
+
+            selfScript.DestroyGameObjAfterDelayGracefully(1.0f);
+            boxCollider.DestroyGameObjAfterDelayGracefully(1.0f);
+            transform.DestroyGameObjAfterDelayGracefully(1.0f);
+
+            gameObject.Layer(0);
+            selfScript.Layer(0);
+            boxCollider.Layer(0);
+            transform.Layer(0);
+
+            gameObject.Layer("Default");
+            selfScript.Layer("Default");
+            boxCollider.Layer("Default");
+            transform.Layer("Default");
+        }
+
+        #region CEGO001 Show
+
+        public static GameObject Show(this GameObject selfObj)
+        {
+            selfObj.SetActive(true);
+            return selfObj;
+        }
+
+        public static T Show<T>(this T selfComponent) where T : Component
+        {
+            selfComponent.gameObject.Show();
+            return selfComponent;
+        }
+
+        #endregion
+
+        #region CEGO002 Hide
+
+        public static GameObject Hide(this GameObject selfObj)
+        {
+            selfObj.SetActive(false);
+            return selfObj;
+        }
+
+        public static T Hide<T>(this T selfComponent) where T : Component
+        {
+            selfComponent.gameObject.Hide();
+            return selfComponent;
+        }
+
+        #endregion
+
+        #region CEGO003 DestroyGameObj
+
+        public static void DestroyGameObj<T>(this T selfBehaviour) where T : Component
+        {
+            selfBehaviour.gameObject.DestroySelf();
+        }
+
+        #endregion
+
+        #region CEGO004 DestroyGameObjGracefully
+
+        public static void DestroyGameObjGracefully<T>(this T selfBehaviour) where T : Component
+        {
+            if (selfBehaviour && selfBehaviour.gameObject)
+            {
+                selfBehaviour.gameObject.DestroySelfGracefully();
+            }
+        }
+
+        #endregion
+
+        #region CEGO005 DestroyGameObjGracefully
+
+        public static T DestroyGameObjAfterDelay<T>(this T selfBehaviour, float delay) where T : Component
+        {
+            selfBehaviour.gameObject.DestroySelfAfterDelay(delay);
+            return selfBehaviour;
+        }
+
+        public static T DestroyGameObjAfterDelayGracefully<T>(this T selfBehaviour, float delay) where T : Component
+        {
+            if (selfBehaviour && selfBehaviour.gameObject)
+            {
+                selfBehaviour.gameObject.DestroySelfAfterDelay(delay);
+            }
+
+            return selfBehaviour;
+        }
+
+        #endregion
+
+        #region CEGO006 Layer
+
+        public static GameObject Layer(this GameObject selfObj, int layer)
+        {
+            selfObj.layer = layer;
+            return selfObj;
+        }
+
+        public static T Layer<T>(this T selfComponent, int layer) where T : Component
+        {
+            selfComponent.gameObject.layer = layer;
+            return selfComponent;
+        }
+
+        public static GameObject Layer(this GameObject selfObj, string layerName)
+        {
+            selfObj.layer = LayerMask.NameToLayer(layerName);
+            return selfObj;
+        }
+
+        public static T Layer<T>(this T selfComponent, string layerName) where T : Component
+        {
+            selfComponent.gameObject.layer = LayerMask.NameToLayer(layerName);
+            return selfComponent;
+        }
+
+        public static bool IsInLayerMask(this GameObject selfObj, LayerMask layerMask)
+        {
+            return LayerMaskUtility.IsInLayerMask(selfObj, layerMask);
+        }
+
+        public static bool IsInLayerMask<T>(this T selfComponent, LayerMask layerMask) where T : Component
+        {
+            return LayerMaskUtility.IsInLayerMask(selfComponent.gameObject, layerMask);
+        }
+
+        #endregion
+
+        #region CEGO007 Component
+
+        public static T GetOrAddComponent<T>(this GameObject selfComponent) where T : Component
+        {
+            var comp = selfComponent.gameObject.GetComponent<T>();
+            return comp ? comp : selfComponent.gameObject.AddComponent<T>();
+        }
+
+        public static T GetOrAddComponent<T>(this Component component) where T : Component
+        {
+            return component.gameObject.GetOrAddComponent<T>();
+        }
+
+        public static Component GetOrAddComponent(this GameObject selfComponent, Type type)
+        {
+            var comp = selfComponent.gameObject.GetComponent(type);
+            return comp ? comp : selfComponent.gameObject.AddComponent(type);
+        }
+
+        #endregion
+    }
+
+    public static class LayerMaskExtension
+    {
+        public static bool ContainsGameObject(this LayerMask selfLayerMask, GameObject gameObject)
+        {
+            return LayerMaskUtility.IsInLayerMask(gameObject, selfLayerMask);
+        }
+    }
+
+    public static class LayerMaskUtility
+    {
+        public static bool IsInLayerMask(GameObject gameObj, LayerMask layerMask)
+        {
+            // 根据Layer数值进行移位获得用于运算的Mask值
+            var objLayerMask = 1 << gameObj.layer;
+            return (layerMask.value & objLayerMask) == objLayerMask;
+        }
+    }
+
+    public static class MaterialExtension
+    {
+        /// <summary>
+        /// 参考资料: https://blog.csdn.net/qiminixi/article/details/78402505
+        /// </summary>
+        /// <param name="self"></param>
+        public static void SetStandardMaterialToTransparentMode(this Material self)
+        {
+            self.SetFloat("_Mode", 3);
+            self.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            self.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            self.SetInt("_ZWrite", 0);
+            self.DisableKeyword("_ALPHATEST_ON");
+            self.EnableKeyword("_ALPHABLEND_ON");
+            self.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            self.renderQueue = 3000;
+        }
+    }
+
+    public static class TextureExtensions
+    {
+        public static Sprite CreateSprite(this Texture2D self)
+        {
+            return Sprite.Create(self, new Rect(0, 0, self.width, self.height), Vector2.one * 0.5f);
+        }
+    }
 }

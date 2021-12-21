@@ -1,7 +1,22 @@
-# QFramework.CSharpExtension
+# ExtensionKit
 独立的、对 Unity 和 CSharp 语言的扩展支持库
 
+由 QFramework 团队官方维护的独立工具包（不依赖 QFramework）。
 
+## 环境要求
+
+* Unity 2018.4LTS
+
+## 安装
+
+* PackageManager
+
+    * add from package git url：https://github.com/liangxiegame/ExtensionKit.git 
+    * 或者国内镜像仓库：https://gitee.com/liangxiegame/ExtensionKit.git
+
+* 或者直接复制[此代码](ExtensionKit.cs)到自己项目中的任意脚本中
+
+    
 
 #### QuickStart:
 
@@ -341,3 +356,9 @@ action.InvokeGracefully();
 actionWithInt.InvokeGracefully(1);
 actionWithIntString.InvokeGracefully(1, "str");
 ```
+
+
+
+## 10. More
+
+请自己体验更多的 API
